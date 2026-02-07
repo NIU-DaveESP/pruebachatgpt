@@ -140,8 +140,8 @@
         <button id="restart" class="secondary">Reiniciar</button>
       </div>
       <div class="tips">
-        Controles: mueve con WASD o flechas, impulsa con espacio y usa ratón o toque para
-        atraer orbes cercanos.
+        Controles: WASD o flechas para moverte, Q/E para rotar, espacio para impulso y ratón
+        o toque para atraer orbes cercanos.
       </div>
     </section>
   </main>
@@ -202,10 +202,10 @@
       return {
         x,
         y,
-        vx: rand(-1.4, -0.4) * state.level,
-        vy: rand(0.4, 1.4) * (Math.random() > 0.5 ? 1 : -1),
+        vx: rand(-0.8, -0.3) * (0.8 + state.level * 0.2),
+        vy: rand(0.2, 0.8) * (Math.random() > 0.5 ? 1 : -1),
         radius: size,
-        spin: rand(-0.04, 0.04),
+        spin: rand(-0.025, 0.025),
         angle: rand(0, Math.PI * 2),
       };
     }
@@ -244,8 +244,8 @@
       state.ship.vy = 0;
       state.ship.angle = 0;
       state.ship.boost = 0;
-      state.asteroids = Array.from({ length: 4 }, createAsteroid);
-      state.orbs = Array.from({ length: 3 }, createOrb);
+      state.asteroids = Array.from({ length: 3 }, createAsteroid);
+      state.orbs = Array.from({ length: 4 }, createOrb);
       state.sparks = [];
       updateUI();
       draw();
@@ -259,8 +259,8 @@
     }
 
     function addObjectsForLevel() {
-      const targetAsteroids = 4 + state.level * 2;
-      const targetOrbs = 3 + Math.floor(state.level / 2);
+      const targetAsteroids = 3 + state.level;
+      const targetOrbs = 4 + Math.floor(state.level / 2);
       while (state.asteroids.length < targetAsteroids) {
         state.asteroids.push(createAsteroid());
       }
@@ -271,19 +271,22 @@
 
     function applyControls(dt) {
       const ship = state.ship;
-      const acceleration = 220;
+      const acceleration = 200;
       const friction = 0.98;
-      const turnSpeed = 4.2;
+      const turnSpeed = 3.4;
       let ax = 0;
       let ay = 0;
+      let rotate = 0;
       if (keys.has("ArrowUp") || keys.has("w")) ay -= 1;
       if (keys.has("ArrowDown") || keys.has("s")) ay += 1;
       if (keys.has("ArrowLeft") || keys.has("a")) ax -= 1;
       if (keys.has("ArrowRight") || keys.has("d")) ax += 1;
-      ship.angle += (ax * turnSpeed * dt) / 1000;
-      if (ay !== 0) {
-        ship.vx += Math.cos(ship.angle) * (acceleration * ay * dt) / 1000;
-        ship.vy += Math.sin(ship.angle) * (acceleration * ay * dt) / 1000;
+      if (keys.has("q")) rotate -= 1;
+      if (keys.has("e")) rotate += 1;
+      ship.angle += (rotate * turnSpeed * dt) / 1000;
+      if (ax !== 0 || ay !== 0) {
+        ship.vx += (ax * acceleration * dt) / 1000;
+        ship.vy += (ay * acceleration * dt) / 1000;
         ship.boost = clamp(ship.boost + dt / 400, 0, 1);
       } else {
         ship.boost = clamp(ship.boost - dt / 300, 0, 1);

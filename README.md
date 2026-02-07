@@ -19,5 +19,6 @@ Luego visita `http://127.0.0.1:8000/index.html` en tu navegador.
 ## Controles rápidos
 
 - Mover la nave: WASD o flechas.
+- Rotar la nave: Q y E.
 - Impulso extra: barra espaciadora.
 - Atraer orbes cercanos: mantener pulsado clic o toque sobre el canvas.
