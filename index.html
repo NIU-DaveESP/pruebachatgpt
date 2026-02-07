@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Piedra, Papel o Tijeras</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6fb;
+      color: #1f2937;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 18px 45px rgba(31, 41, 55, 0.15);
+      padding: 32px;
+      max-width: 720px;
+      width: 100%;
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    p {
+      margin: 8px 0 18px;
+      line-height: 1.5;
+    }
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+    .score {
+      background: #f3f4f6;
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+    }
+    .score span {
+      display: block;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+    .choices {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 1rem;
+      cursor: pointer;
+      background: #2563eb;
+      color: #fff;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+    }
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .result {
+      background: #eef2ff;
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 72px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .result strong {
+      font-size: 1.1rem;
+    }
+    .history {
+      margin-top: 20px;
+      font-size: 0.95rem;
+      color: #4b5563;
+    }
+    .history ul {
+      margin: 10px 0 0;
+      padding-left: 18px;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>🪨📄✂️ Piedra, Papel o Tijeras</h1>
+    <p>
+      Elige tu jugada y compite contra el ordenador. El primero en ganar 3 rondas se lleva la partida.
+    </p>
+
+    <section class="scoreboard">
+      <div class="score">
+        Tú
+        <span id="player-score">0</span>
+      </div>
+      <div class="score">
+        Ordenador
+        <span id="computer-score">0</span>
+      </div>
+      <div class="score">
+        Ronda
+        <span id="round">0</span>
+      </div>
+    </section>
+
+    <section class="choices">
+      <button data-choice="piedra">🪨 Piedra</button>
+      <button data-choice="papel">📄 Papel</button>
+      <button data-choice="tijeras">✂️ Tijeras</button>
+    </section>
+
+    <section class="result" aria-live="polite">
+      <strong id="headline">Haz tu elección para comenzar.</strong>
+      <span id="details">¿Preparado para ganar al ordenador?</span>
+    </section>
+
+    <div class="history">
+      <strong>Historial rápido</strong>
+      <ul id="history-list"></ul>
+    </div>
+
+    <div class="choices" style="margin-top: 24px;">
+      <button class="secondary" id="reset">Reiniciar partida</button>
+    </div>
+  </main>
+
+  <script>
+    const choices = ["piedra", "papel", "tijeras"];
+    const winsAgainst = {
+      piedra: "tijeras",
+      papel: "piedra",
+      tijeras: "papel",
+    };
+
+    const playerScoreEl = document.getElementById("player-score");
+    const computerScoreEl = document.getElementById("computer-score");
+    const roundEl = document.getElementById("round");
+    const headlineEl = document.getElementById("headline");
+    const detailsEl = document.getElementById("details");
+    const historyListEl = document.getElementById("history-list");
+
+    let playerScore = 0;
+    let computerScore = 0;
+    let round = 0;
+
+    const emoji = {
+      piedra: "🪨",
+      papel: "📄",
+      tijeras: "✂️",
+    };
+
+    function updateScoreboard() {
+      playerScoreEl.textContent = playerScore;
+      computerScoreEl.textContent = computerScore;
+      roundEl.textContent = round;
+    }
+
+    function appendHistory(message) {
+      const item = document.createElement("li");
+      item.textContent = message;
+      historyListEl.prepend(item);
+      if (historyListEl.children.length > 5) {
+        historyListEl.removeChild(historyListEl.lastChild);
+      }
+    }
+
+    function resolveRound(playerChoice) {
+      if (playerScore >= 3 || computerScore >= 3) {
+        headlineEl.textContent = "La partida terminó. Reinicia para jugar otra.";
+        detailsEl.textContent = "";
+        return;
+      }
+
+      const computerChoice = choices[Math.floor(Math.random() * choices.length)];
+      round += 1;
+
+      let outcome;
+      if (playerChoice === computerChoice) {
+        outcome = "empate";
+      } else if (winsAgainst[playerChoice] === computerChoice) {
+        outcome = "victoria";
+        playerScore += 1;
+      } else {
+        outcome = "derrota";
+        computerScore += 1;
+      }
+
+      const message = `Ronda ${round}: ${emoji[playerChoice]} ${playerChoice} vs ${emoji[computerChoice]} ${computerChoice}`;
+      appendHistory(message);
+
+      if (outcome === "empate") {
+        headlineEl.textContent = "¡Empate!";
+        detailsEl.textContent = `Ambos eligieron ${playerChoice}.`;
+      } else if (outcome === "victoria") {
+        headlineEl.textContent = "¡Punto para ti!";
+        detailsEl.textContent = `${playerChoice} vence a ${computerChoice}.`;
+      } else {
+        headlineEl.textContent = "¡Punto para el ordenador!";
+        detailsEl.textContent = `${computerChoice} supera a ${playerChoice}.`;
+      }
+
+      if (playerScore === 3 || computerScore === 3) {
+        headlineEl.textContent = playerScore === 3 ? "¡Ganaste la partida!" : "El ordenador ganó la partida.";
+        detailsEl.textContent = "Pulsa reiniciar para jugar otra vez.";
+      }
+
+      updateScoreboard();
+    }
+
+    function resetGame() {
+      playerScore = 0;
+      computerScore = 0;
+      round = 0;
+      historyListEl.innerHTML = "";
+      headlineEl.textContent = "Haz tu elección para comenzar.";
+      detailsEl.textContent = "¿Preparado para ganar al ordenador?";
+      updateScoreboard();
+    }
+
+    document.querySelectorAll("button[data-choice]").forEach((button) => {
+      button.addEventListener("click", () => {
+        resolveRound(button.dataset.choice);
+      });
+    });
+
+    document.getElementById("reset").addEventListener("click", resetGame);
+
+    updateScoreboard();
+  </script>
+</body>
+</html>
